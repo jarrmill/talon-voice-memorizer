@@ -1,151 +1,78 @@
 <template>
-  <v-container>
-    <v-row class="text-center">
-      <v-col cols="12">
-        <v-img
-          :src="require('../assets/logo.svg')"
-          class="my-3"
-          contain
-          height="200"
-        />
-      </v-col>
-
-      <v-col class="mb-4">
-        <h1 class="display-2 font-weight-bold mb-3">
-          Welcome to Vuetify
-        </h1>
-
-        <p class="subheading font-weight-regular">
-          For help and collaboration with other Vuetify developers,
-          <br>please join our online
-          <a
-            href="https://community.vuetifyjs.com"
-            target="_blank"
-          >Discord Community</a>
-        </p>
-      </v-col>
-
-      <v-col
-        class="mb-5"
-        cols="12"
-      >
-        <h2 class="headline font-weight-bold mb-3">
-          What's next?
-        </h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(next, i) in whatsNext"
-            :key="i"
-            :href="next.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ next.text }}
-          </a>
-        </v-row>
-      </v-col>
-
-      <v-col
-        class="mb-5"
-        cols="12"
-      >
-        <h2 class="headline font-weight-bold mb-3">
-          Important Links
-        </h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(link, i) in importantLinks"
-            :key="i"
-            :href="link.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ link.text }}
-          </a>
-        </v-row>
-      </v-col>
-
-      <v-col
-        class="mb-5"
-        cols="12"
-      >
-        <h2 class="headline font-weight-bold mb-3">
-          Ecosystem
-        </h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(eco, i) in ecosystem"
-            :key="i"
-            :href="eco.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ eco.text }}
-          </a>
-        </v-row>
-      </v-col>
-    </v-row>
-  </v-container>
+  <div>
+    <p>{{ currentQuestion.question }}</p>
+    <p>{{ this.timer }}</p>
+    <v-text-field
+      v-model="answer"
+      label="Answer"
+    ></v-text-field>
+  </div>
 </template>
 
 <script>
-  export default {
-    name: 'HelloWorld',
+  import questions from '../problems/questions';
+  import { getQuality } from '../helpers/util';
+  import sm2 from '../helpers/sm2';
 
-    data: () => ({
-      ecosystem: [
-        {
-          text: 'vuetify-loader',
-          href: 'https://github.com/vuetifyjs/vuetify-loader',
-        },
-        {
-          text: 'github',
-          href: 'https://github.com/vuetifyjs/vuetify',
-        },
-        {
-          text: 'awesome-vuetify',
-          href: 'https://github.com/vuetifyjs/awesome-vuetify',
-        },
-      ],
-      importantLinks: [
-        {
-          text: 'Documentation',
-          href: 'https://vuetifyjs.com',
-        },
-        {
-          text: 'Chat',
-          href: 'https://community.vuetifyjs.com',
-        },
-        {
-          text: 'Made with Vuetify',
-          href: 'https://madewithvuejs.com/vuetify',
-        },
-        {
-          text: 'Twitter',
-          href: 'https://twitter.com/vuetifyjs',
-        },
-        {
-          text: 'Articles',
-          href: 'https://medium.com/vuetify',
-        },
-      ],
-      whatsNext: [
-        {
-          text: 'Explore components',
-          href: 'https://vuetifyjs.com/components/api-explorer',
-        },
-        {
-          text: 'Select a layout',
-          href: 'https://vuetifyjs.com/layout/pre-defined',
-        },
-        {
-          text: 'Frequently Asked Questions',
-          href: 'https://vuetifyjs.com/getting-started/frequently-asked-questions',
-        },
-      ],
-    }),
+  export default {
+    data() {
+      return {
+        questions,
+        answer: '',
+        questionIndex: 0,
+        intervalId: null,
+        timer: 0,
+      }
+    },
+    computed: {
+      currentQuestion() {
+        const sorted = this.questions.slice().sort((a, b) => {
+          return a.interval - b.interval;
+        });
+        console.log('Sorted: ', sorted);
+        return sorted[0];
+      },
+    },
+    watch: {
+      answer: function(val) {
+        if (val === this.currentQuestion.answer) {
+          this.markAnswerCorrect();
+        }
+      }
+    },
+    methods: {
+      startTimer: function() {
+        const id = setInterval(() => {
+          this.timer += 1;
+        }, 1000);
+        this.intervalId = id;
+      },
+      clearTimer: function() {
+        clearInterval(this.intervalId);
+        this.intervalId = null;
+      },
+      markAnswerCorrect: function() {
+          let quality = getQuality(this.timer);
+          let { interval, repetitions, easeFactor } = sm2(quality, this.currentQuestion.repetitions, this.currentQuestion.easeFactor, this.currentQuestion.interval);
+          console.log( "new interval: ", interval, repetitions, easeFactor);
+          // adjust question data according to sm2 feedback;
+          this.currentQuestion.repetitions = repetitions;
+          this.currentQuestion.interval = interval;
+          this.currentQuestion.easeFactor = easeFactor;
+
+          // clean up
+          this.answer = '';
+          this.timer = 0;
+          this.clearTimer();
+          this.startTimer();
+      },
+    },
+    mounted() {
+      this.startTimer();
+    }
   }
 </script>
+
+<style lang="scss" scoped>
+
+</style>
