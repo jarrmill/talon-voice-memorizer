@@ -1,30 +1,31 @@
 <template>
   <v-app>
-    <v-app-bar
-      app
-      color="primary"
-      dark
-    >
-    </v-app-bar>
-
+    <Header @toggleDrawer="showDrawer = !showDrawer"/>
+    <NavBar @toggleDrawer="showDrawer = !showDrawer" :showDrawer="showDrawer" />
     <v-content>
-      <HelloWorld/>
+      <router-view/>
     </v-content>
   </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld';
-
+import Header from './components/Header';
+import NavBar from './components/NavDrawer';
 export default {
   name: 'App',
-
-  components: {
-    HelloWorld,
+  data() {
+    return {
+      showDrawer: false,
+    }
   },
-
-  data: () => ({
-    //
-  }),
+  methods: {
+    toggleDrawer: function() {
+      return !this.showDrawer;
+    },
+  },
+  components: {
+    Header,
+    NavBar,
+  }
 };
 </script>
